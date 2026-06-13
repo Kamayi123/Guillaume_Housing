@@ -15,6 +15,7 @@ class Property {
     public $image;
     public $type;
     public $status;
+    public $is_featured;
     public $created_at;
 
     public function __construct($db) {
@@ -41,8 +42,8 @@ class Property {
     // Create property
     public function create() {
         $query = "INSERT INTO " . $this->table . " 
-                  (title, description, price, location, bedrooms, bathrooms, area, image, type, status) 
-                  VALUES (:title, :description, :price, :location, :bedrooms, :bathrooms, :area, :image, :type, :status)";
+                  (title, description, price, location, bedrooms, bathrooms, area, image, type, status, is_featured) 
+                  VALUES (:title, :description, :price, :location, :bedrooms, :bathrooms, :area, :image, :type, :status, :is_featured)";
         
         $stmt = $this->conn->prepare($query);
         
@@ -56,8 +57,11 @@ class Property {
         $stmt->bindParam(':image', $this->image);
         $stmt->bindParam(':type', $this->type);
         $stmt->bindParam(':status', $this->status);
+        $is_featured_val = $this->is_featured ? 1 : 0;
+        $stmt->bindParam(':is_featured', $is_featured_val);
         
         if($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;
@@ -68,7 +72,7 @@ class Property {
         $query = "UPDATE " . $this->table . " 
                   SET title = :title, description = :description, price = :price, 
                       location = :location, bedrooms = :bedrooms, bathrooms = :bathrooms, 
-                      area = :area, type = :type, status = :status 
+                      area = :area, type = :type, status = :status, is_featured = :is_featured 
                   WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
@@ -83,6 +87,8 @@ class Property {
         $stmt->bindParam(':area', $this->area);
         $stmt->bindParam(':type', $this->type);
         $stmt->bindParam(':status', $this->status);
+        $is_featured_val = $this->is_featured ? 1 : 0;
+        $stmt->bindParam(':is_featured', $is_featured_val);
         
         if($stmt->execute()) {
             return true;
@@ -100,5 +106,37 @@ class Property {
             return true;
         }
         return false;
+    }
+
+    // Update featured status
+    public function updateFeatured($id, $isFeatured) {
+        $query = "UPDATE " . $this->table . " SET is_featured = :is_featured WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $featured_val = $isFeatured ? 1 : 0;
+        $stmt->bindParam(':is_featured', $featured_val);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
+    // Save image to images table
+    public function saveImage($propertyId, $filename, $filePath, $isPrimary = false) {
+        $query = "INSERT INTO images (property_id, filename, file_path, is_primary) 
+                  VALUES (:property_id, :filename, :file_path, :is_primary)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':property_id', $propertyId);
+        $stmt->bindParam(':filename', $filename);
+        $stmt->bindParam(':file_path', $filePath);
+        $primary_val = $isPrimary ? 1 : 0;
+        $stmt->bindParam(':is_primary', $primary_val);
+        return $stmt->execute();
+    }
+
+    // Get property images
+    public function getImages($propertyId) {
+        $query = "SELECT * FROM images WHERE property_id = :property_id ORDER BY is_primary DESC, created_at ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':property_id', $propertyId);
+        $stmt->execute();
+        return $stmt;
     }
 }

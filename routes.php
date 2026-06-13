@@ -7,6 +7,7 @@ require_once 'controllers/PropertyController.php';
 require_once 'controllers/ContactController.php';
 require_once 'controllers/AdminController.php';
 require_once 'controllers/BookingController.php';
+require_once 'controllers/AuthController.php';
 
 class Router {
     private $routes = [];
@@ -72,8 +73,30 @@ $router->addRoute('GET', '/api/messages', 'ContactController', 'getAll');
 $router->addRoute('POST', '/api/message/delete/{id}', 'ContactController', 'delete');
 
 // Admin routes
-$router->addRoute('GET', '/dashboard', 'HomeController', 'faq');
+$router->addRoute('GET', '/admin', 'AdminController', 'dashboard');
+$router->addRoute('GET', '/admin/login', 'AuthController', 'showLoginForm');
+$router->addRoute('POST', '/admin/login', 'AuthController', 'login');
+$router->addRoute('GET', '/admin/logout', 'AuthController', 'logout');
+
+// Admin pages
+$router->addRoute('GET', '/admin/properties', 'AdminController', 'properties');
+$router->addRoute('GET', '/admin/properties/create', 'AdminController', 'createProperty');
+$router->addRoute('GET', '/admin/properties/edit/{id}', 'AdminController', 'editProperty');
+$router->addRoute('GET', '/admin/users', 'AdminController', 'users');
+$router->addRoute('GET', '/admin/bookings', 'AdminController', 'bookings');
+$router->addRoute('GET', '/admin/messages', 'AdminController', 'messages');
+$router->addRoute('GET', '/admin/analytics', 'AdminController', 'analytics');
+$router->addRoute('GET', '/admin/settings', 'HomeController', 'faq');
+
+// Admin API endpoints
 $router->addRoute('GET', '/api/admin/stats', 'AdminController', 'getStatistics');
+$router->addRoute('GET', '/api/admin/users', 'AdminController', 'getUsers');
+$router->addRoute('POST', '/api/admin/user/role/{id}', 'AdminController', 'updateUserRole');
+$router->addRoute('POST', '/api/admin/user/delete/{id}', 'AdminController', 'deleteUser');
+$router->addRoute('GET', '/api/admin/analytics', 'AdminController', 'getAnalytics');
+$router->addRoute('GET', '/api/admin/export/bookings', 'AdminController', 'exportBookings');
+$router->addRoute('GET', '/api/admin/export/properties', 'AdminController', 'exportProperties');
+$router->addRoute('POST', '/api/property/featured/{id}', 'PropertyController', 'toggleFeatured');
 
 // Booking routes
 $router->addRoute('POST', '/booking/create', 'BookingController', 'create');

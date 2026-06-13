@@ -33,6 +33,20 @@ class User {
         return $stmt;
     }
 
+    // Verify credentials and return user data array or false
+    public function verifyCredentials($email, $password) {
+        $stmt = $this->getByEmail($email);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user && isset($user['password'])) {
+            if (password_verify($password, $user['password'])) {
+                // Remove password before returning
+                unset($user['password']);
+                return $user;
+            }
+        }
+        return false;
+    }
+
     // Get user by id
     public function getById($id) {
         $query = "SELECT id, name, email, phone, role, created_at FROM " . $this->table . " WHERE id = :id LIMIT 1";
