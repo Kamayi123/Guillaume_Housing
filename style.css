@@ -215,8 +215,14 @@ body {
 .hero-left h1{
     font-size: 90px;
     line-height: 1.1;
-
     margin-bottom: 30px;
+    opacity: 0;
+    transform: translateY(60px);
+}
+
+.hero-left h1.animate {
+    animation: heroTitleAnimate 1s ease-out forwards;
+    animation-delay: 0.2s;
 }
 
 .contact-btn{
@@ -941,6 +947,28 @@ body {
         opacity: 0;
     }
     to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpFade {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes heroTitleAnimate {
+    0% {
+        transform: translateY(60px);
+        opacity: 0;
+    }
+    100% {
         transform: translateY(0);
         opacity: 1;
     }

@@ -16,7 +16,7 @@
                 <p>+237 653901025</p>
             </div>
 
-            <h1>
+            <h1 id="hero-title">
                 FIND YOUR <br>
                 DREAM HOME <br>
                 TODAY
@@ -195,5 +195,29 @@
     </div>
 </section>
 </main>
+
+<script>
+// Trigger hero title animation using Intersection Observer
+const heroTitle = document.getElementById('hero-title');
+
+if (heroTitle) {
+    // Create Intersection Observer to detect when element enters/exits viewport
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Element is in viewport - add animation
+                heroTitle.classList.add('animate');
+            } else {
+                // Element left viewport - remove animation for re-trigger on scroll back
+                heroTitle.classList.remove('animate');
+            }
+        });
+    }, {
+        threshold: 0.1 // Trigger when 10% of element is visible
+    });
+    
+    observer.observe(heroTitle);
+}
+</script>
 
 <?php include 'footer.php'; ?>

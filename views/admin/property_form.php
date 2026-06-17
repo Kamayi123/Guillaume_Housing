@@ -67,6 +67,14 @@ $formAction = $isEdit ? "/GuillaumeHousing/api/property/update/{$property['id']}
         <small>Select multiple images (JPG, PNG). First image will be primary.</small>
     </div>
     
+    <div class="admin-form-group">
+        <label>Or Select from Unassigned Images:</label>
+        <div id="unassigned-images" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:10px;">
+            <p class="load-message">Loading unassigned images...</p>
+        </div>
+        <input type="hidden" id="selected-images" name="selected_image_ids" value="">
+    </div>
+    
     <?php if ($isEdit && !empty($property['image'])): ?>
     <div class="admin-form-group">
         <label>Current Image:</label>
@@ -79,6 +87,59 @@ $formAction = $isEdit ? "/GuillaumeHousing/api/property/update/{$property['id']}
 </form>
 
 <script>
+let selectedImageIds = new Set();
+
+// Load unassigned images
+fetch('/GuillaumeHousing/api/admin/images')
+    .then(r => r.json())
+    .then(images => {
+        const unassignedImages = images.filter(img => img.property_id === null || img.property_id === '');
+        const container = document.getElementById('unassigned-images');
+        
+        if (unassignedImages.length === 0) {
+            container.innerHTML = '<p class="load-message">No unassigned images available</p>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        unassignedImages.forEach(img => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative; cursor:pointer; border-radius:4px; overflow:hidden; border:2px solid #ddd;';
+            wrapper.onclick = () => toggleImageSelection(wrapper, img.id);
+            
+            const imgEl = document.createElement('img');
+            imgEl.src = img.file_path;
+            imgEl.style.cssText = 'width:100%; height:80px; object-fit:cover; display:block;';
+            
+            const checkbox = document.createElement('div');
+            checkbox.style.cssText = 'position:absolute; top:4px; right:4px; width:16px; height:16px; background:white; border:1px solid #333; border-radius:2px; display:flex; align-items:center; justify-content:center;';
+            
+            wrapper.appendChild(imgEl);
+            wrapper.appendChild(checkbox);
+            wrapper.dataset.imageId = img.id;
+            wrapper.dataset.checkbox = true;
+            
+            container.appendChild(wrapper);
+        });
+    })
+    .catch(e => {
+        document.getElementById('unassigned-images').innerHTML = '<p class="error-message">Error loading images</p>';
+    });
+
+function toggleImageSelection(element, imageId) {
+    if (selectedImageIds.has(imageId)) {
+        selectedImageIds.delete(imageId);
+        element.style.borderColor = '#ddd';
+        element.querySelector('div').innerHTML = '';
+    } else {
+        selectedImageIds.add(imageId);
+        element.style.borderColor = '#28a745';
+        element.querySelector('div').innerHTML = '✓';
+        element.querySelector('div').style.cssText = 'position:absolute; top:4px; right:4px; width:16px; height:16px; background:#28a745; color:white; border:none; border-radius:2px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;';
+    }
+    document.getElementById('selected-images').value = Array.from(selectedImageIds).join(',');
+}
+
 document.getElementById('property-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);

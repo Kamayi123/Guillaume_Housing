@@ -123,6 +123,27 @@ class PropertyController {
                     $this->property->saveImage($this->property->id, $file['filename'], $file['webPath'], $file['isPrimary']);
                 }
                 
+                // Assign selected unassigned images to this property
+                if (!empty($_POST['selected_image_ids'] ?? '')) {
+                    $imageIds = array_filter(array_map('intval', explode(',', $_POST['selected_image_ids'])));
+                    foreach ($imageIds as $imageId) {
+                        $stmt = $this->db->prepare("UPDATE images SET property_id = ? WHERE id = ?");
+                        $stmt->execute([$this->property->id, $imageId]);
+                    }
+                    
+                    // If no primary image was uploaded, set the first selected image as primary
+                    if (empty($imagePath) && !empty($imageIds)) {
+                        $firstImageId = reset($imageIds);
+                        $stmt = $this->db->prepare("SELECT file_path FROM images WHERE id = ? LIMIT 1");
+                        $stmt->execute([$firstImageId]);
+                        $firstImage = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($firstImage) {
+                            $stmt = $this->db->prepare("UPDATE properties SET image = ? WHERE id = ?");
+                            $stmt->execute([$firstImage['file_path'], $this->property->id]);
+                        }
+                    }
+                }
+                
                 http_response_code(201);
                 echo json_encode(['success' => true, 'message' => 'Property created successfully', 'id' => $this->property->id]);
             } else {
@@ -215,6 +236,27 @@ class PropertyController {
                 // Save new uploaded files to images table
                 foreach ($uploadedFiles as $file) {
                     $this->property->saveImage($this->property->id, $file['filename'], $file['webPath'], $file['isPrimary']);
+                }
+                
+                // Assign selected unassigned images to this property
+                if (!empty($_POST['selected_image_ids'] ?? '')) {
+                    $imageIds = array_filter(array_map('intval', explode(',', $_POST['selected_image_ids'])));
+                    foreach ($imageIds as $imageId) {
+                        $stmt = $this->db->prepare("UPDATE images SET property_id = ? WHERE id = ?");
+                        $stmt->execute([$this->property->id, $imageId]);
+                    }
+                    
+                    // If no primary image was uploaded, set the first selected image as primary
+                    if (empty($uploadedFiles) && !empty($imageIds)) {
+                        $firstImageId = reset($imageIds);
+                        $stmt = $this->db->prepare("SELECT file_path FROM images WHERE id = ? LIMIT 1");
+                        $stmt->execute([$firstImageId]);
+                        $firstImage = $stmt->fetch(PDO::FETCH_ASSOC);
+                        if ($firstImage) {
+                            $stmt = $this->db->prepare("UPDATE properties SET image = ? WHERE id = ?");
+                            $stmt->execute([$firstImage['file_path'], $this->property->id]);
+                        }
+                    }
                 }
                 
                 http_response_code(200);

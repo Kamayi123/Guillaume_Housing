@@ -9,9 +9,9 @@
     </div>
     <form id="image-upload-form" class="admin-form">
         <div class="admin-form-group">
-            <label>Select Property:</label>
-            <select id="property-select" required>
-                <option value="">-- Select a property --</option>
+            <label>Select Property (Optional):</label>
+            <select id="property-select">
+                <option value="">-- Unassigned --</option>
             </select>
         </div>
         <div class="admin-form-group">
@@ -73,14 +73,15 @@ function renderImages(images) {
     }
 
     let html = '<table class="admin-table">';
-    html += '<thead><tr><th>ID</th><th>Property</th><th>View</th><th>Uploaded</th><th>Actions</th></tr></thead>';
+    html += '<thead><tr><th>ID</th><th>Preview</th><th>Property</th><th>Uploaded</th><th>Actions</th></tr></thead>';
     html += '<tbody>';
     images.forEach(img => {
         const uploadDate = new Date(img.created_at).toLocaleDateString();
+        const propertyName = img.property_title || '<em style="color:#999;">Unassigned</em>';
         html += `<tr>
             <td>${img.id}</td>
-            <td><strong>${img.property_title}</strong></td>
-            <td><a href="${img.file_path}" target="_blank" class="admin-btn btn-info">Open</a></td>
+            <td><a href="${img.file_path}" target="_blank"><img src="${img.file_path}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; cursor:pointer;" alt="preview"></a></td>
+            <td><strong>${propertyName}</strong></td>
             <td>${uploadDate}</td>
             <td><a href="#" onclick="deleteImage(${img.id}); return false" class="admin-btn btn-danger">Delete</a></td>
         </tr>`;
@@ -97,12 +98,6 @@ document.getElementById('image-upload-form').addEventListener('submit', function
     const imageInput = document.getElementById('image-input');
     const messageDiv = document.getElementById('upload-message');
     
-    if (!propertyId) {
-        messageDiv.style.display = 'block';
-        messageDiv.innerHTML = '<p class="error-message">Please select a property</p>';
-        return;
-    }
-    
     if (!imageInput.files[0]) {
         messageDiv.style.display = 'block';
         messageDiv.innerHTML = '<p class="error-message">Please select an image</p>';
@@ -110,7 +105,9 @@ document.getElementById('image-upload-form').addEventListener('submit', function
     }
     
     const formData = new FormData();
-    formData.append('property_id', propertyId);
+    if (propertyId) {
+        formData.append('property_id', propertyId);
+    }
     formData.append('image', imageInput.files[0]);
     
     fetch('/GuillaumeHousing/api/image/upload', {

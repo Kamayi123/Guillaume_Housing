@@ -23,9 +23,9 @@ class ImageController {
             $this->syncImagesFromFolder();
             
             $stmt = $this->db->prepare("
-                SELECT i.*, p.title as property_title 
+                SELECT i.*, COALESCE(p.title, 'Unassigned') as property_title 
                 FROM images i 
-                JOIN properties p ON i.property_id = p.id 
+                LEFT JOIN properties p ON i.property_id = p.id 
                 ORDER BY i.created_at DESC
             ");
             $stmt->execute();
@@ -134,25 +134,32 @@ class ImageController {
                 return;
             }
             
-            if (empty($_POST['property_id'] ?? '')) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Property ID is required']);
-                return;
-            }
-            
             if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'No image uploaded or upload error']);
                 return;
             }
             
-            $propertyId = intval($_POST['property_id']);
             $file = $_FILES['image'];
             
             if (!validateImageFile($file)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid image file']);
                 return;
+            }
+            
+            // Property ID is optional
+            $propertyId = null;
+            if (!empty($_POST['property_id'] ?? '')) {
+                $propertyId = intval($_POST['property_id']);
+                // Verify property exists
+                $stmt = $this->db->prepare("SELECT id FROM properties WHERE id = ? LIMIT 1");
+                $stmt->execute([$propertyId]);
+                if ($stmt->rowCount() === 0) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Property not found']);
+                    return;
+                }
             }
             
             $uploadDir = __DIR__ . '/../images/properties/';
@@ -171,7 +178,13 @@ class ImageController {
             }
             
             $webPath = '/GuillaumeHousing/images/properties/' . $filename;
-            $this->property->saveImage($propertyId, $filename, $webPath, false);
+            
+            // Insert into database
+            $stmt = $this->db->prepare("
+                INSERT INTO images (property_id, filename, file_path, is_primary, created_at)
+                VALUES (?, ?, ?, 0, NOW())
+            ");
+            $stmt->execute([$propertyId, $filename, $webPath]);
             
             http_response_code(201);
             echo json_encode(['success' => true, 'message' => 'Image uploaded successfully', 'filename' => $filename, 'webPath' => $webPath]);
@@ -232,7 +245,11 @@ class ImageController {
     }
 
     public function page() {
-        include 'views/admin/images.php';
+        requireAdmin();
+        require_once 'views/admin/header.php';
+        require_once 'views/admin/sidebar.php';
+        require_once 'views/admin/images.php';
+        require_once 'views/admin/footer.php';
     }
 }
 ?>
