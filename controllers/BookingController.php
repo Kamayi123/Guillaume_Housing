@@ -3,6 +3,7 @@
 require_once 'Database.php';
 require_once 'models/Booking.php';
 require_once 'models/Property.php';
+require_once 'helpers/auth.php';
 
 class BookingController {
     private $db;
@@ -111,29 +112,53 @@ class BookingController {
     }
 
     public function update($id) {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            requireAdmin();
+            
+            header('Content-Type: application/json');
+            
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+                return;
+            }
+            
+            $data = json_decode(file_get_contents('php://input'), true);
+            $status = $data['status'] ?? 'pending';
+            
             $this->booking->id = $id;
-            $this->booking->status = $_POST['status'] ?? 'pending';
+            $this->booking->status = $status;
 
             if ($this->booking->update()) {
-                header('Content-Type: application/json');
+                http_response_code(200);
                 echo json_encode(['success' => true, 'message' => 'Booking updated successfully']);
             } else {
-                header('Content-Type: application/json');
+                http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to update booking']);
             }
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
 
     public function delete($id) {
-        $this->booking->id = $id;
-        
-        if ($this->booking->delete()) {
+        try {
+            requireAdmin();
+            
+            $this->booking->id = $id;
+            
+            if ($this->booking->delete()) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Booking deleted successfully']);
+            } else {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Failed to delete booking']);
+            }
+        } catch (\Throwable $e) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'message' => 'Booking deleted successfully']);
-        } else {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'message' => 'Failed to delete booking']);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
 }

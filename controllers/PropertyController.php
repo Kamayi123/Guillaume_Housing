@@ -40,47 +40,75 @@ class PropertyController {
     }
 
     public function create() {
-        requireAdmin();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            requireAdmin();
+            
+            header('Content-Type: application/json');
+            
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+                return;
+            }
+            
+            // Validate required fields
+            if (empty($_POST['title'] ?? '')) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Title is required']);
+                return;
+            }
+            if (empty($_POST['price'] ?? '')) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Price is required']);
+                return;
+            }
+            
             $this->property->title = sanitizeInput($_POST['title']);
-            $this->property->description = sanitizeInput($_POST['description']);
+            $this->property->description = sanitizeInput($_POST['description'] ?? '');
             $this->property->price = floatval($_POST['price']);
-            $this->property->location = sanitizeInput($_POST['location']);
-            $this->property->bedrooms = intval($_POST['bedrooms']);
-            $this->property->bathrooms = intval($_POST['bathrooms']);
-            $this->property->area = intval($_POST['area']);
+            $this->property->location = sanitizeInput($_POST['location'] ?? '');
+            $this->property->bedrooms = intval($_POST['bedrooms'] ?? 0);
+            $this->property->bathrooms = intval($_POST['bathrooms'] ?? 0);
+            $this->property->area = intval($_POST['area'] ?? 0);
             $this->property->type = sanitizeInput($_POST['type'] ?? 'Residential');
             $this->property->status = sanitizeInput($_POST['status'] ?? 'available');
-            $this->property->is_featured = isset($_POST['is_featured']) ? 1 : 0;
             
             // Handle image uploads
             $imagePath = '';
+            $uploadedFiles = [];
+            
             if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
                 $uploadDir = __DIR__ . '/../images/properties/';
                 if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+                    @mkdir($uploadDir, 0777, true);
                 }
                 
                 $imageCount = count($_FILES['images']['name']);
                 for ($i = 0; $i < $imageCount; $i++) {
-                    $file = [
-                        'name' => $_FILES['images']['name'][$i],
-                        'type' => $_FILES['images']['type'][$i],
-                        'tmp_name' => $_FILES['images']['tmp_name'][$i],
-                        'error' => $_FILES['images']['error'][$i],
-                        'size' => $_FILES['images']['size'][$i]
-                    ];
-                    
-                    if (validateImageFile($file)) {
-                        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                        $filename = uniqid() . '_' . time() . '.' . $ext;
-                        $filepath = $uploadDir . $filename;
+                    if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
+                        $file = [
+                            'name' => $_FILES['images']['name'][$i],
+                            'type' => $_FILES['images']['type'][$i],
+                            'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                            'error' => $_FILES['images']['error'][$i],
+                            'size' => $_FILES['images']['size'][$i]
+                        ];
                         
-                        if (move_uploaded_file($file['tmp_name'], $filepath)) {
-                            $webPath = '/GuillaumeHousing/images/properties/' . $filename;
-                            if ($i === 0) {
-                                $imagePath = $webPath; // First image as primary
+                        if (validateImageFile($file)) {
+                            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                            $filename = time() . '_' . uniqid() . '.' . $ext;
+                            $filepath = $uploadDir . $filename;
+                            
+                            if (@move_uploaded_file($file['tmp_name'], $filepath)) {
+                                $webPath = '/GuillaumeHousing/images/properties/' . $filename;
+                                $uploadedFiles[] = [
+                                    'filename' => $filename,
+                                    'webPath' => $webPath,
+                                    'isPrimary' => ($i === 0)
+                                ];
+                                if ($i === 0) {
+                                    $imagePath = $webPath;
+                                }
                             }
                         }
                     }
@@ -90,52 +118,115 @@ class PropertyController {
             $this->property->image = $imagePath;
 
             if ($this->property->create()) {
-                // Save images to images table
-                if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
-                    $imageCount = count($_FILES['images']['name']);
-                    for ($i = 0; $i < $imageCount; $i++) {
-                        $file = $_FILES['images'];
-                        if ($file['error'][$i] === UPLOAD_ERR_OK) {
-                            $ext = pathinfo($file['name'][$i], PATHINFO_EXTENSION);
-                            $filename = uniqid() . '_' . time() . '.' . $ext;
-                            $webPath = '/GuillaumeHousing/images/properties/' . $filename;
-                            $this->property->saveImage($this->property->id, $filename, $webPath, $i === 0);
-                        }
-                    }
+                // Save uploaded files to images table
+                foreach ($uploadedFiles as $file) {
+                    $this->property->saveImage($this->property->id, $file['filename'], $file['webPath'], $file['isPrimary']);
                 }
                 
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Property created successfully']);
+                http_response_code(201);
+                echo json_encode(['success' => true, 'message' => 'Property created successfully', 'id' => $this->property->id]);
             } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Failed to create property']);
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Failed to create property in database']);
             }
+        } catch (Exception $e) {
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
 
     public function update($id) {
-        requireAdmin();
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        try {
+            requireAdmin();
+            
+            header('Content-Type: application/json');
+            
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+                return;
+            }
+            
+            // Validate required fields
+            if (empty($_POST['title'] ?? '')) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Title is required']);
+                return;
+            }
+            if (empty($_POST['price'] ?? '')) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Price is required']);
+                return;
+            }
+            
             $this->property->id = $id;
             $this->property->title = sanitizeInput($_POST['title']);
-            $this->property->description = sanitizeInput($_POST['description']);
+            $this->property->description = sanitizeInput($_POST['description'] ?? '');
             $this->property->price = floatval($_POST['price']);
-            $this->property->location = sanitizeInput($_POST['location']);
-            $this->property->bedrooms = intval($_POST['bedrooms']);
-            $this->property->bathrooms = intval($_POST['bathrooms']);
-            $this->property->area = intval($_POST['area']);
+            $this->property->location = sanitizeInput($_POST['location'] ?? '');
+            $this->property->bedrooms = intval($_POST['bedrooms'] ?? 0);
+            $this->property->bathrooms = intval($_POST['bathrooms'] ?? 0);
+            $this->property->area = intval($_POST['area'] ?? 0);
             $this->property->type = sanitizeInput($_POST['type'] ?? 'Residential');
-            $this->property->status = sanitizeInput($_POST['status']);
-            $this->property->is_featured = isset($_POST['is_featured']) ? 1 : 0;
+            $this->property->status = sanitizeInput($_POST['status'] ?? 'available');
+            
+            // Handle image uploads for update
+            $uploadedFiles = [];
+            if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
+                $uploadDir = __DIR__ . '/../images/properties/';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0777, true);
+                }
+                
+                $imageCount = count($_FILES['images']['name']);
+                for ($i = 0; $i < $imageCount; $i++) {
+                    if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
+                        $file = [
+                            'name' => $_FILES['images']['name'][$i],
+                            'type' => $_FILES['images']['type'][$i],
+                            'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                            'error' => $_FILES['images']['error'][$i],
+                            'size' => $_FILES['images']['size'][$i]
+                        ];
+                        
+                        if (validateImageFile($file)) {
+                            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                            $filename = time() . '_' . uniqid() . '.' . $ext;
+                            $filepath = $uploadDir . $filename;
+                            
+                            if (@move_uploaded_file($file['tmp_name'], $filepath)) {
+                                $webPath = '/GuillaumeHousing/images/properties/' . $filename;
+                                $uploadedFiles[] = [
+                                    'filename' => $filename,
+                                    'webPath' => $webPath,
+                                    'isPrimary' => ($i === 0)
+                                ];
+                                if ($i === 0) {
+                                    $this->property->image = $webPath;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             if ($this->property->update()) {
-                header('Content-Type: application/json');
+                // Save new uploaded files to images table
+                foreach ($uploadedFiles as $file) {
+                    $this->property->saveImage($this->property->id, $file['filename'], $file['webPath'], $file['isPrimary']);
+                }
+                
+                http_response_code(200);
                 echo json_encode(['success' => true, 'message' => 'Property updated successfully']);
             } else {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => 'Failed to update property']);
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Failed to update property in database']);
             }
+        } catch (Exception $e) {
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
 
@@ -153,19 +244,4 @@ class PropertyController {
         }
     }
 
-    // Toggle featured status
-    public function toggleFeatured($id) {
-        requireAdmin();
-        
-        $data = json_decode(file_get_contents('php://input'), true);
-        $isFeatured = isset($data['is_featured']) ? intval($data['is_featured']) : 0;
-        
-        if ($this->property->updateFeatured($id, $isFeatured)) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true]);
-        } else {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false]);
-        }
-    }
 }

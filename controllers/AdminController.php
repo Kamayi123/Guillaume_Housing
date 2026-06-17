@@ -6,6 +6,7 @@ require_once 'models/Booking.php';
 require_once 'models/Message.php';
 require_once 'models/User.php';
 require_once 'helpers/auth.php';
+require_once 'helpers/pdf.php';
 
 class AdminController {
     private $db;
@@ -199,68 +200,43 @@ class AdminController {
     // Export functionality
     public function exportBookings() {
         requireAdmin();
+        
         $booking = new Booking($this->db);
         $stmt = $booking->getAll();
         $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="bookings_' . date('Y-m-d') . '.csv"');
+        $html = PDFGenerator::generateBookingsPDF($bookings);
         
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['ID', 'Property', 'Check-in', 'Check-out', 'Guests', 'Total Price', 'Status', 'Created']);
-        
-        foreach ($bookings as $booking) {
-            fputcsv($output, [
-                $booking['id'],
-                $booking['property_title'],
-                $booking['check_in'],
-                $booking['check_out'],
-                $booking['guests'],
-                $booking['total_price'],
-                $booking['status'],
-                $booking['created_at']
-            ]);
-        }
-        
-        fclose($output);
+        header('Content-Type: text/html; charset=utf-8');
+        header('Content-Disposition: attachment; filename="bookings_' . date('Y-m-d') . '.html"');
+        echo $html;
     }
 
     public function exportProperties() {
         requireAdmin();
+        
         $property = new Property($this->db);
         $stmt = $property->getAll();
         $properties = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="properties_' . date('Y-m-d') . '.csv"');
+        $html = PDFGenerator::generatePropertiesPDF($properties);
         
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['ID', 'Title', 'Location', 'Price', 'Bedrooms', 'Bathrooms', 'Area', 'Type', 'Status', 'Created']);
-        
-        foreach ($properties as $property) {
-            fputcsv($output, [
-                $property['id'],
-                $property['title'],
-                $property['location'],
-                $property['price'],
-                $property['bedrooms'],
-                $property['bathrooms'],
-                $property['area'],
-                $property['type'] ?? 'Residential',
-                $property['status'],
-                $property['created_at']
-            ]);
-        }
-        
-        fclose($output);
+        header('Content-Type: text/html; charset=utf-8');
+        header('Content-Disposition: attachment; filename="properties_' . date('Y-m-d') . '.html"');
+        echo $html;
     }
 
-    // Settings
-    public function settings() {
+    public function exportMessages() {
         requireAdmin();
-        require_once 'views/admin/header.php';
-        require_once 'views/admin/sidebar.php';
-        require_once 'views/admin/settings.php';
-        require_once 'views/admin/footer.php';
+        
+        $message = new Message($this->db);
+        $stmt = $message->getAll();
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $html = PDFGenerator::generateMessagesPDF($messages);
+        
+        header('Content-Type: text/html; charset=utf-8');
+        header('Content-Disposition: attachment; filename="messages_' . date('Y-m-d') . '.html"');
+        echo $html;
     }
 }

@@ -11,20 +11,19 @@
 fetch('/GuillaumeHousing/api/messages')
     .then(r => r.json())
     .then(messages => {
-        let html = '<table style="width:100%;border-collapse:collapse">';
+        let html = '<table class="admin-table">';
         html += '<thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead>';
         html += '<tbody>';
         messages.forEach(m => {
-            html += `<tr style="border-bottom:1px solid #ddd">
+            html += `<tr>
                 <td>${m.id}</td>
                 <td>${m.name}</td>
                 <td>${m.email}</td>
                 <td>${m.subject}</td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${m.message.substring(0, 50)}...</td>
+                <td class="truncate">${m.message.substring(0, 50)}...</td>
                 <td>${new Date(m.created_at).toLocaleDateString()}</td>
                 <td>
-                    <a href="#" onclick="viewMessage(${m.id}, '${m.name.replace(/'/g, "\\'")}', '${m.email}', '${m.subject.replace(/'/g, "\\'")}', '${m.message.replace(/'/g, "\\'").replace(/\n/g, "\\n")}'); return false">View</a> |
-                    <a href="#" onclick="deleteMessage(${m.id}); return false">Delete</a>
+                    <a href="#" onclick="deleteMessage(${m.id}); return false" class="admin-btn btn-danger">Delete</a>
                 </td>
             </tr>`;
         });
@@ -32,12 +31,8 @@ fetch('/GuillaumeHousing/api/messages')
         document.getElementById('messages-list').innerHTML = html;
     })
     .catch(e => {
-        document.getElementById('messages-list').innerHTML = '<p>Error loading messages</p>';
+        document.getElementById('messages-list').innerHTML = '<p class="error-message">Error loading messages</p>';
     });
-
-function viewMessage(id, name, email, subject, message) {
-    alert(`From: ${name} (${email})\nSubject: ${subject}\n\n${message}`);
-}
 
 function deleteMessage(id) {
     if (confirm('Delete this message?')) {

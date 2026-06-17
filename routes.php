@@ -8,6 +8,7 @@ require_once 'controllers/ContactController.php';
 require_once 'controllers/AdminController.php';
 require_once 'controllers/BookingController.php';
 require_once 'controllers/AuthController.php';
+require_once 'controllers/ImageController.php';
 
 class Router {
     private $routes = [];
@@ -86,7 +87,7 @@ $router->addRoute('GET', '/admin/users', 'AdminController', 'users');
 $router->addRoute('GET', '/admin/bookings', 'AdminController', 'bookings');
 $router->addRoute('GET', '/admin/messages', 'AdminController', 'messages');
 $router->addRoute('GET', '/admin/analytics', 'AdminController', 'analytics');
-$router->addRoute('GET', '/admin/settings', 'HomeController', 'faq');
+$router->addRoute('GET', '/admin/images', 'ImageController', 'page');
 
 // Admin API endpoints
 $router->addRoute('GET', '/api/admin/stats', 'AdminController', 'getStatistics');
@@ -96,7 +97,12 @@ $router->addRoute('POST', '/api/admin/user/delete/{id}', 'AdminController', 'del
 $router->addRoute('GET', '/api/admin/analytics', 'AdminController', 'getAnalytics');
 $router->addRoute('GET', '/api/admin/export/bookings', 'AdminController', 'exportBookings');
 $router->addRoute('GET', '/api/admin/export/properties', 'AdminController', 'exportProperties');
-$router->addRoute('POST', '/api/property/featured/{id}', 'PropertyController', 'toggleFeatured');
+$router->addRoute('GET', '/api/admin/export/messages', 'AdminController', 'exportMessages');
+
+// Image routes
+$router->addRoute('GET', '/api/admin/images', 'ImageController', 'getAll');
+$router->addRoute('POST', '/api/image/upload', 'ImageController', 'upload');
+$router->addRoute('POST', '/api/image/delete/{id}', 'ImageController', 'delete');
 
 // Booking routes
 $router->addRoute('POST', '/booking/create', 'BookingController', 'create');

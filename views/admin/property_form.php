@@ -6,53 +6,53 @@ $formAction = $isEdit ? "/GuillaumeHousing/api/property/update/{$property['id']}
 ?>
 <h1><?php echo $formTitle; ?></h1>
 
-<form id="property-form" enctype="multipart/form-data" style="max-width:600px">
-    <div style="margin-bottom:12px">
-        <label>Title:</label><br>
-        <input type="text" name="title" value="<?php echo $isEdit ? htmlspecialchars($property['title']) : ''; ?>" required style="width:100%;padding:8px">
+<form id="property-form" class="admin-form" enctype="multipart/form-data">
+    <div class="admin-form-group">
+        <label>Title:</label>
+        <input type="text" name="title" value="<?php echo $isEdit ? htmlspecialchars($property['title']) : ''; ?>" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Description:</label><br>
-        <textarea name="description" rows="4" style="width:100%;padding:8px"><?php echo $isEdit ? htmlspecialchars($property['description']) : ''; ?></textarea>
+    <div class="admin-form-group">
+        <label>Description:</label>
+        <textarea name="description" rows="4"><?php echo $isEdit ? htmlspecialchars($property['description']) : ''; ?></textarea>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Price:</label><br>
-        <input type="number" name="price" value="<?php echo $isEdit ? $property['price'] : ''; ?>" step="0.01" required style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Price (FCFA):</label>
+        <input type="number" name="price" value="<?php echo $isEdit ? $property['price'] : ''; ?>" step="1" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Location:</label><br>
-        <input type="text" name="location" value="<?php echo $isEdit ? htmlspecialchars($property['location']) : ''; ?>" required style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Location:</label>
+        <input type="text" name="location" value="<?php echo $isEdit ? htmlspecialchars($property['location']) : ''; ?>" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Bedrooms:</label><br>
-        <input type="number" name="bedrooms" value="<?php echo $isEdit ? $property['bedrooms'] : ''; ?>" required style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Bedrooms:</label>
+        <input type="number" name="bedrooms" value="<?php echo $isEdit ? $property['bedrooms'] : ''; ?>" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Bathrooms:</label><br>
-        <input type="number" name="bathrooms" value="<?php echo $isEdit ? $property['bathrooms'] : ''; ?>" required style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Bathrooms:</label>
+        <input type="number" name="bathrooms" value="<?php echo $isEdit ? $property['bathrooms'] : ''; ?>" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Area (sq ft):</label><br>
-        <input type="number" name="area" value="<?php echo $isEdit ? $property['area'] : ''; ?>" required style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Area (sq ft):</label>
+        <input type="number" name="area" value="<?php echo $isEdit ? $property['area'] : ''; ?>" required>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Type:</label><br>
-        <select name="type" style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Type:</label>
+        <select name="type">
             <option value="Residential" <?php echo ($isEdit && $property['type'] === 'Residential') ? 'selected' : ''; ?>>Residential</option>
             <option value="Commercial" <?php echo ($isEdit && $property['type'] === 'Commercial') ? 'selected' : ''; ?>>Commercial</option>
         </select>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label>Status:</label><br>
-        <select name="status" style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Status:</label>
+        <select name="status">
             <option value="available" <?php echo ($isEdit && $property['status'] === 'available') ? 'selected' : ''; ?>>Available</option>
             <option value="for-rent" <?php echo ($isEdit && $property['status'] === 'for-rent') ? 'selected' : ''; ?>>For Rent</option>
             <option value="for-sale" <?php echo ($isEdit && $property['status'] === 'for-sale') ? 'selected' : ''; ?>>For Sale</option>
@@ -61,45 +61,71 @@ $formAction = $isEdit ? "/GuillaumeHousing/api/property/update/{$property['id']}
         </select>
     </div>
     
-    <div style="margin-bottom:12px">
-        <label><input type="checkbox" name="is_featured" value="1" <?php echo ($isEdit && isset($property['is_featured']) && $property['is_featured']) ? 'checked' : ''; ?>> Featured Property</label>
-    </div>
-    
-    <div style="margin-bottom:12px">
-        <label>Property Images:</label><br>
-        <input type="file" name="images[]" multiple accept="image/*" style="width:100%;padding:8px">
+    <div class="admin-form-group">
+        <label>Property Images:</label>
+        <input type="file" name="images[]" multiple accept="image/*">
         <small>Select multiple images (JPG, PNG). First image will be primary.</small>
     </div>
     
     <?php if ($isEdit && !empty($property['image'])): ?>
-    <div style="margin-bottom:12px">
-        <label>Current Image:</label><br>
-        <img src="<?php echo htmlspecialchars($property['image']); ?>" style="max-width:200px">
+    <div class="admin-form-group">
+        <label>Current Image:</label>
+        <img src="<?php echo htmlspecialchars($property['image']); ?>" class="current-image">
     </div>
     <?php endif; ?>
     
-    <button type="submit" style="padding:10px 20px;background:#28a745;color:#fff;border:none;border-radius:4px;cursor:pointer">Save Property</button>
-    <a href="/GuillaumeHousing/admin/properties" style="margin-left:10px">Cancel</a>
+    <button type="submit" class="admin-form-submit">Save Property</button>
+    <a href="/GuillaumeHousing/admin/properties">Cancel</a>
 </form>
 
 <script>
 document.getElementById('property-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+    
+    console.log('Submitting form to: <?php echo $formAction; ?>');
     
     fetch('<?php echo $formAction; ?>', {
         method: 'POST',
         body: formData
     })
-    .then(r => r.json())
+    .then(r => {
+        console.log('Response status:', r.status);
+        const contentType = r.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+            return r.json().then(data => {
+                if (!r.ok) {
+                    throw new Error(data.message || 'HTTP ' + r.status);
+                }
+                return data;
+            });
+        } else {
+            return r.text().then(text => {
+                throw new Error('Invalid response type. Expected JSON, got: ' + contentType + '\n' + text.substring(0, 500));
+            });
+        }
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             alert('Property saved successfully');
             window.location.href = '/GuillaumeHousing/admin/properties';
         } else {
             alert('Error: ' + (data.message || 'Unknown error'));
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     })
-    .catch(e => alert('Error saving property'));
+    .catch(e => {
+        console.error('Fetch error:', e);
+        alert('Error saving property: ' + e.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
 });
 </script>
