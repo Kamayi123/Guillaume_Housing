@@ -1,7 +1,7 @@
 # Admin Dashboard Implementation Guide
 
 ## Overview
-A complete, secure admin dashboard for Guillaume Housing with separate `/admin` section featuring authentication, property management, user administration, booking management, analytics, and CSV export capabilities.
+A complete, secure admin dashboard for Guillaume Housing with separate `/admin` section featuring authentication, property management, user administration, booking management, analytics, and pdf export capabilities.
 
 ## Features Implemented
 

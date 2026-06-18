@@ -56,6 +56,7 @@ $router = new Router();
 // Home routes
 $router->addRoute('GET', '/', 'HomeController', 'index');
 $router->addRoute('GET', '/about', 'HomeController', 'about');
+$router->addRoute('GET', '/faq', 'HomeController', 'faq');
 
 // Property routes
 $router->addRoute('GET', '/properties', 'PropertyController', 'index');
