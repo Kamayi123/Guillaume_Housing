@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS property_details (
     FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 );
 
--- Insert Sample Admin User (password: admin123)
+-- Insert Sample Admin User (password: password)
 INSERT INTO users (name, email, password, phone, role) VALUES
 ('Admin User', 'admin@guillaumehousing.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '123-456-7890', 'admin');
 
