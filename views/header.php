@@ -18,7 +18,7 @@
                 <li><a href="/GuillaumeHousing/about">About Us</a></li>
                 <li><a href="/GuillaumeHousing/properties">Properties</a></li>
                 <li><a href="/GuillaumeHousing/contact">Contact Us</a></li>
-                <li><a href="/GuillaumeHousing/dashboard">FAQ</a></li>
+                <li><a href="/GuillaumeHousing/faq">FAQ</a></li>
             </ul>
         </div>
     </nav>
